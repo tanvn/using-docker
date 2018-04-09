@@ -1,10 +1,7 @@
 #Default compose args
 COMPOSE_ARGS=" -f jenkins.yml -p jenkins "
 
-pwd
 cd identidock
-ls -la
-
 #Make sure old containers are gone
 sudo docker-compose $COMPOSE_ARGS stop
 sudo docker-compose $COMPOSE_ARGS rm --force -v
@@ -22,7 +19,15 @@ if [ $ERR -eq 0 ]; then
   IP=$(sudo docker inspect -f {{.NetworkSettings.IPAddress}} \
           jenkins_identidock_1)
   CODE=$(curl -sL -w "%{http_code}" $IP:9090/monster/bla -o /dev/null) || true
-  if [ $CODE -ne 200 ]; then
+  if [ $CODE -eq 200 ]; then
+    echo "Test passed - Tagging"
+    HASH=$(git rev-parse --short HEAD)
+    sudo docker tag jenkins_identidock tanvn84/identidock:$HASH
+    sudo docker tag jenkins_identidock tanvn84/identidock:newest
+    echo "Pushing"
+    sudo docker push tanvn84/identidock:$HASH
+    sudo docker push tanvn84/identidock:newest
+  else
     echo "Site returned " $CODE
     ERR=1
   fi
