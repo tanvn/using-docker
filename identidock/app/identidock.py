@@ -2,7 +2,7 @@ from flask import Flask, Response, request
 import requests
 import hashlib
 import redis
-
+import html
 app = Flask(__name__)
 default_name = 'Joe Bloggs'
 salt = "TAN-VN-LEARNING"
@@ -14,7 +14,9 @@ def mainpage():
 
     name = default_name
     if request.method == 'POST':
-    	name = request.form['name']
+    	name = html.escape(request.form['name'], quote=True)
+    	#name = request.form['name']
+    	app.logger.info('name is %s', name)
 
     salted_name = salt + name
     name_hash = hashlib.sha256(salted_name.encode()).hexdigest()
@@ -23,7 +25,7 @@ def mainpage():
               Hello <input type="text" name="name" value="{0}">
               <input type="submit" value="submit">
               </form>
-              <p>You look like a:
+              <p>You look like this:
               <img src="/monster/{1}"/>
               '''.format(name, name_hash)
     footer = '</body></html>'
@@ -32,6 +34,7 @@ def mainpage():
 
 @app.route('/monster/<name>')
 def get_identicon(name):
+	name= html.escape(name, quote=True)
 	image= cache.get(name)
 	if image is None:
 		print("Cache miss", flush=True)
