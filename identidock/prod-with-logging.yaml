@@ -5,7 +5,7 @@ proxy:
   ports:
     - "80:80"
   environment:
-    - NGINX_HOST=10.0.1.16
+    - NGINX_HOST=10.0.1.6
     - NGINX_PROXY=http://identidock:9090
 identidock:
   build: .
@@ -16,12 +16,22 @@ identidock:
     ENV: PROD
 dnmonster:
   image: amouat/dnmonster:1.0
+
 redis:
   image: redis:3.0
-
 logspout:
   image: amouat/logspout-logstash:1.0
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
   ports:
     - "8000:80"
+  links:
+    - logstash
+  command: logstash://logstash:5000
+logstash:
+  image: logstash:2.3.4
+  volumes:
+    - ./logstash.conf:/etc/logstash.conf
+  environment:
+    LOGSPOUT: ignore
+  command: -f /etc/logstash.conf
